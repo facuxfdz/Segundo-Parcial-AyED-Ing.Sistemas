@@ -7,59 +7,49 @@
 using namespace std;
 #define MAX_PAISES 200
 
-struct tNodoDia{
-    unsigned short int dia;
-    unsigned short int cantidades[4];
-    tNodoDia* sgteDia;
-};
-
-struct tsPaisMes // redefinir el tInfo
+struct 
 {
-  unsigned short int acumulados;
-  unsigned int cantidades[4];
-  tNodoDia* sgteDia;
+    unsigned short int dia;
+    unsigned int cantidades[4];
+}typedef tInfo; // ESTRUCTURA QUE REPRESENTA AL CAMPO "INFO" DE UN NODO
 
-};
+struct tNodoDia{ 
+    tInfo info;
+    tNodoDia* sgteDia;
+}; // ESTRUCTURA QUE REPRESENTA CADA DIA DE DATOS CORRESPONDIENTES A UN PAIS Y MES
+
+struct tsParDia 
+{
+    char nombrePais[21];
+    unsigned short int mes;
+    unsigned short int dia;
+    unsigned int cantidades[4];
+}; // ESTRUCTURA PARA LEER LOS REGISTROS DEL PARTE DIARIO
 
 struct tsPais
 {
     char nombrePais[21];
     char continente[21];
     unsigned int cantHabit;
-};
+}; // ESTRUCTURA PARA LEER LOS REGISTROS DE PAISES
 
-struct tsParDia
-{
-    char nombrePais[21];
-    unsigned short int mes;
-    unsigned short int dia;
-    unsigned int cantidades[4];
-};
-
-
-struct tvrPaises
-{
-    char nombrePais[21];
-    char continente[21];
-    unsigned int cantHabit;
-};
-
-
+typedef tsPais tvrPaises[MAX_PAISES]; // VECTOR DE PAISES
+typedef tNodoDia** tmrPaisesMeses; // MATRIZ DE PAISES MESES
 
 void Abrir(ifstream&,ifstream&);
 void Cerrar(ifstream&,ifstream&);
-void InicMat(tsPaisMes**&);
-void ProcPaises(ifstream&,tvrPaises[],int&);
-void ProcParteDiario(ifstream&,tsPaisMes**&,tvrPaises[],int);
-void Listado(tsPaisMes**,tvrPaises[],int);
+void InicMat(tNodoDia**&);
+void ProcPaises(ifstream&,tsPais[],int&);
+void ProcParteDiario(ifstream&,tNodoDia**&,tsPais[],int);
+void Listado(tNodoDia**,tsPais[],int);
 void push(tNodoDia*&,tsParDia);
 void pushHead(tNodoDia*&, tsParDia);
 void pushMid(tNodoDia*&,tsParDia);
 void pushNode(tNodoDia*&, tsParDia);
 void Acumular(tNodoDia*&,tsParDia);
 tNodoDia* ExisteNodo(tNodoDia*&,tsParDia);
-void OrdXBur(tvrPaises[],int);
-bool BusqBin(tvrPaises[],char[],int, int&);
+void OrdXBur(tsPais[],int);
+bool BusqBin(tsPais[],char[],int, int&);
 bool compare(char[],char[]);
 
 
@@ -67,10 +57,10 @@ bool compare(char[],char[]);
 int main()
 {
     ifstream Paises, ParteDiario;
-    tsPaisMes** mPaisesMeses;
-    tvrPaises vPaises[200];
+    tmrPaisesMeses mPaisesMeses;
+    tvrPaises vPaises;
     int cantPaises = 0;
-    
+   
     Abrir(Paises,ParteDiario);
     InicMat(mPaisesMeses);
     ProcPaises(Paises,vPaises,cantPaises);
@@ -91,10 +81,10 @@ void Cerrar(ifstream &arPaises, ifstream &arParDia){
     arParDia.close();
 }
 
-void InicMat(tsPaisMes** &matriz){
-    matriz = new tsPaisMes*[200];
+void InicMat(tNodoDia** &matriz){
+    matriz = new tNodoDia*[200];
     for(int i=0;i<MAX_PAISES;i++){
-       matriz[i] = new tsPaisMes[12];
+       matriz[i] = new tNodoDia[12];
     }
 
     for(int i=0;i<MAX_PAISES;i++){
@@ -105,7 +95,7 @@ void InicMat(tsPaisMes** &matriz){
     }
 }
 
-void ProcPaises(ifstream &arPaises, tvrPaises tvrPaises[], int &cantPaises){
+void ProcPaises(ifstream &arPaises, tsPais tvrPaises[], int &cantPaises){
     tsPais registro;
     arPaises.read((char*)&registro,sizeof(registro));
     while(arPaises.good()){
@@ -119,13 +109,12 @@ void ProcPaises(ifstream &arPaises, tvrPaises tvrPaises[], int &cantPaises){
 }
 
 
-void ProcParteDiario(ifstream &arParDia, tsPaisMes**& matriz, tvrPaises paises[], int cantPaises){
+void ProcParteDiario(ifstream &arParDia, tNodoDia**& matriz, tsPais paises[], int cantPaises){
     tsParDia registro;
     arParDia.read((char*)&registro,sizeof(registro));
-    int count = 0;
+
     while(arParDia.good()){
         int index;
-        count++;
         if(BusqBin(paises,registro.nombrePais,cantPaises,index)){
             
             push(matriz[index][registro.mes-1].sgteDia,registro);
@@ -136,12 +125,13 @@ void ProcParteDiario(ifstream &arParDia, tsPaisMes**& matriz, tvrPaises paises[]
     }
 }
 
-void Listado(tsPaisMes** matriz, tvrPaises paises[], int cantPaises){
+void Listado(tNodoDia** matriz, tsPais paises[], int cantPaises){
     
     cout<<setw(50)<<"======================================================="<<endl;
     cout<<setw(50)<<"Listado de casos Hisopados, Infectados, Recuperados y fallecidos"<<
     "ordenado por Pais, Mes y Dia"<<endl;
     cout<<setw(50)<<"======================================================="<<endl<<endl;
+    
     for(int i=0;i<cantPaises;i++){
         cout<<"Pais: "<<paises[i].nombrePais<<"Cant.Hab.: "<<paises[i].cantHabit<<endl;
         for(int j=0;j<12;j++){
@@ -152,15 +142,15 @@ void Listado(tsPaisMes** matriz, tvrPaises paises[], int cantPaises){
             setw(8) << "Fallec."<<endl;
             
             while(pNodo){
-                cout<<setw(10)<<pNodo->dia
+                cout<<setw(10)<<pNodo->info.dia
                 <<setw(8)
-                <<pNodo->cantidades[0]
+                <<pNodo->info.cantidades[0]
                 <<setw(8)
-                <<pNodo->cantidades[1]
+                <<pNodo->info.cantidades[1]
                 <<setw(8)
-                <<pNodo->cantidades[2]
+                <<pNodo->info.cantidades[2]
                 <<setw(8)
-                <<pNodo->cantidades[3]<<endl;
+                <<pNodo->info.cantidades[3]<<endl;
                         
                 pNodo = pNodo->sgteDia;
             }
@@ -184,11 +174,11 @@ void push(tNodoDia *&p, tsParDia regPD){
 void pushHead(tNodoDia* &head_ref, tsParDia regParDia){
     tNodoDia* pNodo = new tNodoDia();
 
-    pNodo->dia = regParDia.dia;
-    pNodo->cantidades[0] = regParDia.cantidades[0];
-    pNodo->cantidades[1] = regParDia.cantidades[1];
-    pNodo->cantidades[2] = regParDia.cantidades[2];
-    pNodo->cantidades[3] = regParDia.cantidades[3];
+    pNodo->info.dia = regParDia.dia;
+    pNodo->info.cantidades[0] = regParDia.cantidades[0];
+    pNodo->info.cantidades[1] = regParDia.cantidades[1];
+    pNodo->info.cantidades[2] = regParDia.cantidades[2];
+    pNodo->info.cantidades[3] = regParDia.cantidades[3];
 
     pNodo->sgteDia = head_ref;
     
@@ -204,15 +194,15 @@ void pushMid(tNodoDia* &head_ref, tsParDia new_data){
     tNodoDia* pos_node = head_ref;
     
     // Put in the data
-    new_node->dia = new_data.dia;
-    new_node->cantidades[0] = new_data.cantidades[0];
-    new_node->cantidades[1] = new_data.cantidades[1];
-    new_node->cantidades[2] = new_data.cantidades[2];
-    new_node->cantidades[3] = new_data.cantidades[3];
+    new_node->info.dia = new_data.dia;
+    new_node->info.cantidades[0] = new_data.cantidades[0];
+    new_node->info.cantidades[1] = new_data.cantidades[1];
+    new_node->info.cantidades[2] = new_data.cantidades[2];
+    new_node->info.cantidades[3] = new_data.cantidades[3];
     new_node->sgteDia = NULL;
     
     // Insert in order
-    while(pos_node->sgteDia && new_data.dia > pos_node->sgteDia->dia){
+    while(pos_node->sgteDia && new_data.dia > pos_node->sgteDia->info.dia){
         pos_node = pos_node->sgteDia;
     }
     
@@ -222,7 +212,7 @@ void pushMid(tNodoDia* &head_ref, tsParDia new_data){
 }
 
 void pushNode(tNodoDia* &head_ref, tsParDia regParDia){
-    if(!head_ref || regParDia.dia < head_ref->dia){ 
+    if(!head_ref || regParDia.dia < head_ref->info.dia){ 
         pushHead(head_ref,regParDia);
     }
     else{
@@ -232,10 +222,10 @@ void pushNode(tNodoDia* &head_ref, tsParDia regParDia){
 
 void Acumular(tNodoDia*&pos, tsParDia regPD){
     
-    pos->cantidades[0] += regPD.cantidades[0];
-    pos->cantidades[1] += regPD.cantidades[1];
-    pos->cantidades[2] += regPD.cantidades[2];
-    pos->cantidades[3] += regPD.cantidades[3];
+    pos->info.cantidades[0] += regPD.cantidades[0];
+    pos->info.cantidades[1] += regPD.cantidades[1];
+    pos->info.cantidades[2] += regPD.cantidades[2];
+    pos->info.cantidades[3] += regPD.cantidades[3];
 
 }
 
@@ -245,15 +235,15 @@ void Acumular(tNodoDia*&pos, tsParDia regPD){
 tNodoDia* ExisteNodo(tNodoDia* &head_ref, tsParDia val){
     tNodoDia* puntAct = head_ref;
     
-    while(puntAct && val.dia > puntAct->dia){
+    while(puntAct && val.dia > puntAct->info.dia){
         
         puntAct = puntAct->sgteDia;
     }
   
-    return (puntAct && val.dia == puntAct->dia) ? puntAct : NULL;
+    return (puntAct && val.dia == puntAct->info.dia) ? puntAct : NULL;
 }
 
-void OrdXBur(tvrPaises vec[],int cantPaises){
+void OrdXBur(tsPais vec[],int cantPaises){
 
     int k = 0;
     bool ordenado;
@@ -274,7 +264,7 @@ void OrdXBur(tvrPaises vec[],int cantPaises){
     }while(!ordenado);
 }
 
-bool BusqBin(tvrPaises paises[], char clv[], int cardPaises, int& index){
+bool BusqBin(tsPais paises[], char clv[], int cardPaises, int& index){
     int prim = 0;
     int der = cardPaises - 1;
     int medio = 0;
