@@ -66,18 +66,18 @@ bool compare(char[],char[]);
 
 int main()
 {
-    ifstream arPaises, arParDia;
-    Abrir(arPaises,arParDia);
-    tsPaisMes** matriz;
-    tvrPaises paises[200];
+    ifstream Paises, ParteDiario;
+    tsPaisMes** mPaisesMeses;
+    tvrPaises vPaises[200];
     int cantPaises = 0;
     
-    InicMat(matriz);
-    ProcPaises(arPaises,paises,cantPaises);
-    ProcParteDiario(arParDia,matriz,paises,cantPaises);
-    Listado(matriz,paises,cantPaises);
-
-    Cerrar(arPaises,arParDia);
+    Abrir(Paises,ParteDiario);
+    InicMat(mPaisesMeses);
+    ProcPaises(Paises,vPaises,cantPaises);
+    ProcParteDiario(ParteDiario,mPaisesMeses,vPaises,cantPaises);
+    Listado(mPaisesMeses,vPaises,cantPaises);
+    Cerrar(Paises,ParteDiario);
+    
     return 0;
 }
 
